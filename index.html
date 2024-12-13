@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Caixa</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            position: relative;
+        }
+        header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        header img {
+            height: 50px;
+            border-radius: 8px;
+        }
+        .login-button {
+            position: absolute;
+            top: 20px; /* Ajustado para alinhar com a imagem e logo */
+            right: 70px; /* Ajuste para mover mais para a esquerda */
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            width: 80px; /* Aumentando a largura para o botão ficar mais visível */
+            height: 30px; /* Ajuste da altura */
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+            padding: 0;
+            line-height: 30px;
+        }
+        .login-button:hover {
+            background-color: #555;
+        }
+        .user-logo {
+            position: absolute;
+            top: 20px; /* Ajuste para alinhar na mesma linha do botão */
+            right: 20px; /* Ajusta a posição da imagem em relação ao botão */
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; /* Torna a imagem redonda */
+            display: none; /* Inicialmente escondida */
+            object-fit: cover;
+        }
+        main {
+            padding: 2rem;
+            max-width: 450px;
+            width: 100%;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #444;
+        }
+        h2 {
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            color: #f2f2f2;
+        }
+        .form-group {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+        input {
+            width: 60%;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            width: 60%;
+            padding: 0.8rem;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .logs {
+            margin-top: 2rem;
+            background: #333;
+            padding: 1rem;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            width: 100%;
+        }
+        .logs p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        .balance {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img id="logo" src="logo.JPG" alt="Logo">
+    </header>
+    <button class="login-button" onclick="showLoginModal()">LOGIN</button>
+    <img id="user-logo" class="user-logo" src="" alt="User Logo">
+    <main>
+        <h2>Controle do Caixa</h2>
+        <div class="balance">
+            Saldo Atual: R$ <span id="balance">0.00</span>
+        </div>
+
+        <div class="form-group">
+            <label for="add-amount">Adicionar Dinheiro:</label>
+            <input type="number" id="add-amount" placeholder="Valor a adicionar">
+            <button onclick="addMoney()">Adicionar</button>
+        </div>
+
+        <div class="form-group">
+            <label for="withdraw-amount">Retirar Dinheiro:</label>
+            <input type="number" id="withdraw-amount" placeholder="Valor a retirar">
+            <button onclick="withdrawMoney()">Retirar</button>
+        </div>
+
+        <div class="logs">
+            <h3>Logs de Operações:</h3>
+            <div id="logs"></div>
+        </div>
+    </main>
+
+    <script>
+        let balance = 0;
+        let currentUser = null;
+        const users = {
+            Ryan: "Ryanlima2004.",
+            Italo: "Italo123"
+        };
+        const userLogos = {
+            Ryan: "logoryan.JPG",
+            Italo: "logoitalo.JPG"
+        };
+
+        const balanceElement = document.getElementById('balance');
+        const logsElement = document.getElementById('logs');
+        const logoElement = document.getElementById('logo'); // logo.JPG fica fixa
+        const userLogoElement = document.getElementById('user-logo'); // logo do usuário à direita
+
+        // Carregar logs do GitHub (https://huzz100k.github.io/caixa-de-logs/)
+        function loadLogs() {
+            fetch("https://huzz100k.github.io/caixa-de-logs/")
+                .then(response => response.text())
+                .then(data => {
+                    logsElement.innerHTML = data;
+                })
+                .catch(error => console.error("Erro ao carregar logs:", error));
+        }
+
+        // Salvar logs no GitHub (https://huzz100k.github.io/caixa-de-logs/)
+        function saveLogs(logMessage) {
+            const logsData = {
+                log: logMessage,
+                timestamp: new Date().toLocaleString('pt-BR')
+            };
+
+            fetch("https://huzz100k.github.io/caixa-de-logs/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(logsData)
+            })
+            .then(response => response.json())
+            .catch(error => console.error("Erro ao salvar log:", error));
+        }
+
+        function showLoginModal() {
+            const username = prompt("Digite seu usuário:");
+            const password = prompt("Digite sua senha:");
+            
+            if (users[username] && users[username] === password) {
+                currentUser = username;
+                userLogoElement.src = userLogos[username]; // Altera apenas a imagem do usuário
+                userLogoElement.style.display = "inline-block"; // Exibe a imagem do usuário
+                alert(`Bem-vindo, ${username}!`);
+            } else {
+                alert("Usuário ou senha inválidos.");
+                userLogoElement.style.display = "none"; // Esconde a imagem do usuário se o login falhar
+            }
+        }
+
+        function addMoney() {
+            if (!currentUser) {
+                alert("Faça login antes de realizar uma operação.");
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('add-amount').value);
+            if (!isNaN(amount) && amount > 0) {
+                balance += amount;
+                updateBalance();
+                const logMessage = `Usuário ${currentUser} adicionou R$ ${amount.toFixed(2)} em ${new Date().toLocaleString('pt-BR')}.`;
+                saveLogs(logMessage); // Envia o log para o GitHub
+                document.getElementById('add-amount').value = '';
+            } else {
+                alert('Por favor, insira um valor válido para adicionar.');
+            }
+        }
+
+        function withdrawMoney() {
+            if (!currentUser) {
+                alert("Faça login antes de realizar uma operação.");
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            if (!isNaN(amount) && amount > 0) {
+                if (amount <= balance) {
+                    balance -= amount;
+                    updateBalance();
+                    const logMessage = `Usuário ${currentUser} retirou R$ ${amount.toFixed(2)} em ${new Date().toLocaleString('pt-BR')}.`;
+                    saveLogs(logMessage); // Envia o log para o GitHub
+                    document.getElementById('withdraw-amount').value = '';
+                } else {
+                    alert('Saldo insuficiente para realizar a retirada.');
+                }
+            } else {
+                alert('Por favor, insira um valor válido para retirar.');
+            }
+        }
+
+        function updateBalance() {
+            balanceElement.textContent = balance.toFixed(2);
+        }
+
+        // Carregar as logs ao carregar a página
+        window.onload = loadLogs;
+    </script>
+</body>
+</html>
